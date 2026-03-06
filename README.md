@@ -1,49 +1,102 @@
 # SenzuRouteKit
 
-把 `UIKit + SwiftUI` 的页面路由统一在一个可复用包里。
+A production-oriented navigation framework for **UIKit + SwiftUI** apps.
 
-## 能力
+`SenzuRouteKit` provides:
+- A unified route model (`RoutePath`, `Route`, `Router`)
+- A SwiftUI hosting bridge (`RoutableHostingController`)
+- Built-in DI integration (`SenzuDI`, `@SenzuInjected`) backed by Resolver
+- Optional one-line bootstrap (`QuickRouter.start`)
 
-- 统一管理 route 注册与跳转
-- SwiftUI 页面通过单一 `RoutableHostingController` 承载
-- 支持 push / present
-- 支持 root route 覆盖
-- 支持自定义导航容器（含你自己的 tab bar 控制）
+---
 
-## DI (Built-in)
+## Table of Contents
 
-`SenzuRouteKit` 已内置 Resolver 依赖，并暴露统一 DI API：
+1. [Why SenzuRouteKit](#why-senzuroutekit)
+2. [Installation](#installation)
+3. [Quick Start](#quick-start)
+4. [Core Concepts](#core-concepts)
+5. [API Reference](#api-reference)
+6. [DI API](#di-api)
+7. [Navigation Behavior](#navigation-behavior)
+8. [Best Practices](#best-practices)
+9. [Roadmap](#roadmap)
+
+---
+
+## Why SenzuRouteKit
+
+Most app projects end up duplicating the same navigation glue:
+- route lookup
+- push/present decisions
+- root replacement
+- hosting SwiftUI inside UIKit
+- DI wiring
+
+`SenzuRouteKit` centralizes these concerns into reusable primitives so feature code stays focused on business logic.
+
+---
+
+## Installation
+
+### Xcode (Recommended)
+
+Add package dependency:
+
+- URL: `https://github.com/Chen-Charles-Ke/SenzuRouteKit.git`
+- Version: `1.0.0`
+
+Then link product:
+- `SenzuRouteKit`
+
+### Swift Package Manager
+
+```swift
+.package(url: "https://github.com/Chen-Charles-Ke/SenzuRouteKit.git", exact: "1.0.0")
+```
+
+---
+
+## Quick Start
+
+### Option A: One-line bootstrap (no manual DI setup)
 
 ```swift
 import SenzuRouteKit
 
-SenzuDI.registerRouter(
-    navType: MainNavigationController.self,
-    startPath: AppRoutes.home,
-    routeHandler: self
-)
-```
-
-## 安装
-
-在 Xcode 的 **Package Dependencies** 里添加本地路径：
-
-`/Users/charles/code/senzuProject/SenzuRouteKit`
-
-## 一行启动
-
-```swift
 let router = QuickRouter.start(
     in: window,
     startPath: AppRoutes.home,
     routes: AppRoutes.registeredRoutes(),
-    navType: MainNavigationController.self
+    navType: MainNavigationController.self,
+    routeHandler: self
 )
 ```
 
-## 最小接入示例
+### Option B: DI-first bootstrap (recommended for larger apps)
 
-### 1) 定义 Route
+```swift
+import SenzuRouteKit
+
+SenzuDI.register({ MainApplication() as MainApplication }, scope: .application)
+SenzuDI.registerRouter(
+    navType: MainNavigationController.self,
+    startPath: AppRoutes.home,
+    routeHandler: self,
+    scope: .application
+)
+
+let router: Router = SenzuDI.resolve()
+router.bind(routes: AppRoutes.registeredRoutes())
+router.start()
+```
+
+---
+
+## Core Concepts
+
+### 1) `RoutePath`
+Strongly identifies a destination.
 
 ```swift
 enum AppRoutes: RoutePath {
@@ -56,50 +109,161 @@ enum AppRoutes: RoutePath {
         case .profile: return "/profile"
         }
     }
-
-    static func registeredRoutes() -> [Route] {
-        [
-            Route(path: AppRoutes.home, type: HomeViewModel.self),
-            Route(path: AppRoutes.profile, type: ProfileViewModel.self)
-        ]
-    }
 }
 ```
 
-### 2) 定义页面 ViewModel
+### 2) `Route`
+Binds a `RoutePath` to a `RoutableViewModel` type.
+
+```swift
+[
+    Route(path: AppRoutes.home, type: HomeViewModel.self),
+    Route(path: AppRoutes.profile, type: ProfileViewModel.self)
+]
+```
+
+### 3) `RoutableViewModel`
+The navigation-facing contract for each screen.
 
 ```swift
 final class HomeViewModel: RoutableViewModel {
     required init(parameters: [String : Any]?) throws {}
 
-    var routedView: AnyView {
-        AnyView(Text("Home"))
-    }
-
+    var routedView: AnyView { AnyView(HomeView(viewModel: self)) }
     var isRootView: Bool { true }
     var showTabBar: Bool { true }
 }
 ```
 
-### 3) 在 App 启动时初始化
+### 4) `Router`
+Performs navigation and route lifecycle operations.
+
+---
+
+## API Reference
+
+### `Router`
+
+- `bind(route:)` / `bind(routes:)`: register destination(s)
+- `unbind(route:)` / `unbind(routes:)` / `unbindAll()`: unregister destination(s)
+- `navigate(to:parameters:isDeepLink:animated:)`: go to route (extension helper)
+- `route(to:parameters:isDeepLink:animated:)`: low-level navigation entry
+- `dismiss(animated:)`: pop or dismiss current route
+- `start(animated:)`: navigate to configured `startPath`
+- `logout()`: alias for start/reset behavior
+
+### `Route`
+
+- `path`: route identifier
+- `type`: target `RoutableViewModel.Type`
+- `presentModally`: uses modal presentation when true
+- `requiresAuthentication`: metadata hook for auth flow policies
+
+### `RoutableViewModel`
+
+Required:
+- `init(parameters:)`
+- `routedView`
+
+Optional customization (default implementations provided):
+- `isRootView`
+- `showTabBar`
+- `navigationBarStyle` (`.solid`, `.transparent`, `.hidden`)
+- `preferredStatusBarStyle`
+- `titleText`, `titleTextPublisher`, `titleTextAttributes`
+- `modalTransitionStyle`, `modalPresentationStyle`
+- `enableNavItems`
+
+### `RoutableNavigationController`
+
+Custom `UINavigationController` implementations should conform to:
+- `showTab(path:)`
+- `hideTabBar()`
+- `reloadTabs()`
+
+Use this to keep tab logic app-specific while reusing route core.
+
+### `RouteHandler`
+
+Hooks for nav bar corner actions:
+- `leftCornerIcon()`
+- `rightCornerIcon()`
+
+---
+
+## DI API
+
+`SenzuRouteKit` exposes a simplified DI surface so app code does not need direct Resolver calls.
+
+### `@SenzuInjected`
 
 ```swift
-let router = QuickRouter.start(
-    in: window,
+@SenzuInjected var router: Router
+@SenzuInjected var themeManager: ThemeManager
+```
+
+### `SenzuDI.register`
+
+```swift
+SenzuDI.register({ ThemeManager() as ThemeManager }, scope: .application)
+```
+
+### `SenzuDI.resolve`
+
+```swift
+let router: Router = SenzuDI.resolve()
+```
+
+### `SenzuDI.registerRouter`
+
+```swift
+SenzuDI.registerRouter(
+    navType: MainNavigationController.self,
     startPath: AppRoutes.home,
-    routes: AppRoutes.registeredRoutes(),
-    navType: MainNavigationController.self
+    routeHandler: self,
+    scope: .application
 )
 ```
 
-之后页面内只需要持有 `router` 并调用：
+### `SenzuDIScope`
 
-```swift
-router.navigate(to: AppRoutes.profile)
-```
+Supported scopes:
+- `.application`
+- `.cached`
+- `.graph`
+- `.shared`
+- `.unique`
 
-## 与你当前工程对齐建议
+---
 
-- 先把 `senzu/senzu/Shared/Router` 替换为该 package 引用
-- 第二步再把依赖注入（Resolver）从路由层剥离，放到业务层
-- 第三步增加 typed parameters，替代 `[String: Any]`
+## Navigation Behavior
+
+`NavigationRouter` behavior summary:
+
+- If route is not found: assertion failure (debug), no-op (runtime safe)
+- If ViewModel init fails: assertion failure (debug), no-op
+- If `presentModally == false`:
+  - pop to existing route if already in stack
+  - else push new hosting controller
+  - if `isRootView == true`, replace root controller
+- If `presentModally == true`:
+  - present from top-most visible controller
+
+---
+
+## Best Practices
+
+1. Keep `RoutePath` stable and unique across features.
+2. Keep route parameters minimal; prefer IDs over full models.
+3. Treat `[String: Any]` as transitional; migrate to typed params wrappers over time.
+4. Use `isRootView` only for true root transitions.
+5. Keep tab-bar logic inside your custom navigation controller.
+
+---
+
+## Roadmap
+
+- Typed route parameter support
+- Better route diagnostics / logging hooks
+- Optional deep-link parser utilities
+- Test helpers for route registration and navigation assertions
