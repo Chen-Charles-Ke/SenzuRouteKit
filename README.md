@@ -4,6 +4,7 @@ A production-oriented navigation framework for **UIKit + SwiftUI** apps.
 
 `SenzuRouteKit` provides:
 - A unified route model (`RoutePath`, `Route`, `Router`)
+- Multi-target route registration (`RoutableViewModel`, `UIViewController`, action/SDK entry)
 - A SwiftUI hosting bridge (`RoutableHostingController`)
 - Built-in DI integration (`SenzuDI`, `@SenzuInjected`) backed by Resolver
 - Optional one-line bootstrap (`QuickRouter.start`)
@@ -45,7 +46,7 @@ Most app projects end up duplicating the same navigation glue:
 Add package dependency:
 
 - URL: `https://github.com/Chen-Charles-Ke/SenzuRouteKit.git`
-- Version: `1.0.0`
+- Version: `1.2.0`
 
 Then link product:
 - `SenzuRouteKit`
@@ -53,7 +54,7 @@ Then link product:
 ### Swift Package Manager
 
 ```swift
-.package(url: "https://github.com/Chen-Charles-Ke/SenzuRouteKit.git", exact: "1.0.0")
+.package(url: "https://github.com/Chen-Charles-Ke/SenzuRouteKit.git", exact: "1.2.0")
 ```
 
 ### CocoaPods
@@ -63,7 +64,7 @@ platform :ios, '13.0'
 
 target 'YourApp' do
   use_frameworks!
-  pod 'SenzuRouteKit', :git => 'https://github.com/Chen-Charles-Ke/SenzuRouteKit.git', :tag => '1.0.0'
+  pod 'SenzuRouteKit', :git => 'https://github.com/Chen-Charles-Ke/SenzuRouteKit.git', :tag => '1.2.0'
 end
 ```
 
@@ -76,7 +77,7 @@ pod install
 If you later publish to CocoaPods Trunk, you can switch to:
 
 ```ruby
-pod 'SenzuRouteKit', '1.0.0'
+pod 'SenzuRouteKit', '1.2.0'
 ```
 
 ---
@@ -137,12 +138,15 @@ enum AppRoutes: RoutePath {
 ```
 
 ### 2) `Route`
-Binds a `RoutePath` to a `RoutableViewModel` type.
+Binds a `RoutePath` to one of three target types.
 
 ```swift
 [
     Route(path: AppRoutes.home, type: HomeViewModel.self),
-    Route(path: AppRoutes.profile, type: ProfileViewModel.self)
+    Route(path: AppRoutes.profile, viewControllerFactory: { _ in ProfileViewController() }),
+    Route(path: AppRoutes.openSDK, action: { context in
+        ThirdPartySDK.launch(from: context.navigationController.visibleViewController!)
+    })
 ]
 ```
 
@@ -179,9 +183,12 @@ Performs navigation and route lifecycle operations.
 ### `Route`
 
 - `path`: route identifier
-- `type`: target `RoutableViewModel.Type`
+- `target`: route target enum (`viewModel`, `viewController`, `action`)
+- `type`: optional convenience accessor for `RoutableViewModel` routes
 - `presentModally`: uses modal presentation when true
 - `requiresAuthentication`: metadata hook for auth flow policies
+- `isRootRoute`: force route result to replace root controller
+- `showTabBar`: optional tab visibility override for this route
 
 ### `RoutableViewModel`
 
@@ -266,10 +273,16 @@ Supported scopes:
 
 - If route is not found: assertion failure (debug), no-op (runtime safe)
 - If ViewModel init fails: assertion failure (debug), no-op
-- If `presentModally == false`:
+- If target is `viewModel`:
+  - build `RoutableHostingController` from your view model
+- If target is `viewController`:
+  - build and navigate a UIKit controller directly
+- If target is `action`:
+  - execute closure with `RouteActionContext` (ideal for SDK entry points)
+- If `presentModally == false` (viewModel/viewController):
   - pop to existing route if already in stack
   - else push new hosting controller
-  - if `isRootView == true`, replace root controller
+  - if `isRootView == true` or `isRootRoute == true`, replace root controller
 - If `presentModally == true`:
   - present from top-most visible controller
 

@@ -1,10 +1,10 @@
 Pod::Spec.new do |s|
   s.name             = 'SenzuRouteKit'
-  s.version          = '1.0.0'
+  s.version          = '1.2.0'
   s.summary          = 'A production-oriented navigation framework for UIKit + SwiftUI apps.'
   s.description      = <<-DESC
 SenzuRouteKit centralizes routing, SwiftUI hosting, and DI helpers for UIKit + SwiftUI projects.
-It includes route registration, push/present flow management, and built-in Resolver-backed DI APIs.
+It includes route registration for SwiftUI, UIKit, and action-based SDK entries, plus Resolver-backed DI APIs.
   DESC
   s.homepage         = 'https://github.com/Chen-Charles-Ke/SenzuRouteKit'
   s.author           = { 'Charles Chen' => 'chencharleske@gmail.com' }
