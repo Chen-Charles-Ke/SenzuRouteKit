@@ -1,6 +1,27 @@
 import Resolver
 
-public typealias SenzuScope = ResolverScope
+public enum SenzuDIScope {
+    case application
+    case cached
+    case graph
+    case shared
+    case unique
+
+    var resolverScope: ResolverScope {
+        switch self {
+        case .application:
+            return .application
+        case .cached:
+            return .cached
+        case .graph:
+            return .graph
+        case .shared:
+            return .shared
+        case .unique:
+            return .unique
+        }
+    }
+}
 
 @propertyWrapper
 public struct SenzuInjected<Service> {
@@ -20,10 +41,10 @@ public enum SenzuDI {
     @discardableResult
     public static func register<Service>(
         _ factory: @escaping () -> Service,
-        scope: ResolverScope = .application
+        scope: SenzuDIScope = .application
     ) -> ResolverOptions<Service> {
         Resolver.register { factory() }
-            .scope(scope)
+            .scope(scope.resolverScope)
     }
 
     public static func resolve<Service>(_ type: Service.Type = Service.self) -> Service {
@@ -35,7 +56,7 @@ public enum SenzuDI {
         navType: RoutableNavigationController.Type,
         startPath: RoutePath,
         routeHandler: RouteHandler,
-        scope: ResolverScope = .application
+        scope: SenzuDIScope = .application
     ) -> ResolverOptions<Router> {
         Resolver.register {
             NavigationRouter(
@@ -44,6 +65,6 @@ public enum SenzuDI {
                 routeHandler: routeHandler
             ) as Router
         }
-        .scope(scope)
+        .scope(scope.resolverScope)
     }
 }
