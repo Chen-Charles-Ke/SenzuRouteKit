@@ -10,10 +10,6 @@ let package = Package(
         .library(
             name: "SenzuRouteKit",
             targets: ["SenzuRouteKit"]
-        ),
-        .library(
-            name: "SenzuRouteKitResolver",
-            targets: ["SenzuRouteKitResolver"]
         )
     ],
     dependencies: [
@@ -21,12 +17,8 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "SenzuRouteKit"
-        ),
-        .target(
-            name: "SenzuRouteKitResolver",
+            name: "SenzuRouteKit",
             dependencies: [
-                "SenzuRouteKit",
                 .product(name: "Resolver", package: "Resolver")
             ]
         ),

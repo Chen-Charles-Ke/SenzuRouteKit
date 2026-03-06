@@ -10,16 +10,14 @@
 - 支持 root route 覆盖
 - 支持自定义导航容器（含你自己的 tab bar 控制）
 
-## Resolver Adapter
+## DI (Built-in)
 
-如果你项目使用 `Resolver`，可额外引入 `SenzuRouteKitResolver` target：
+`SenzuRouteKit` 已内置 Resolver 依赖，并暴露统一 DI API：
 
 ```swift
-import Resolver
 import SenzuRouteKit
-import SenzuRouteKitResolver
 
-Resolver.registerSenzuRouter(
+SenzuDI.registerRouter(
     navType: MainNavigationController.self,
     startPath: AppRoutes.home,
     routeHandler: self
