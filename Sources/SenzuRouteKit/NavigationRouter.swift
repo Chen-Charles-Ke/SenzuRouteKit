@@ -6,6 +6,7 @@ public final class NavigationRouter: Router {
     }()
 
     public let startPath: RoutePath
+    public let routeHandler: RouteHandler
 
     private let navType: RoutableNavigationController.Type
     private var currentPath: RoutePath
@@ -13,11 +14,14 @@ public final class NavigationRouter: Router {
 
     public init(
         navType: RoutableNavigationController.Type,
-        startPath: RoutePath
+        startPath: RoutePath,
+        routeHandler: RouteHandler
     ) {
         self.navType = navType
         self.startPath = startPath
         self.currentPath = startPath
+        self.routeHandler = routeHandler
+        RoutableHostingController.routeHandler = routeHandler
     }
 
     public func bind(route: Route) {
@@ -98,6 +102,10 @@ public final class NavigationRouter: Router {
         } else {
             _ = nav.popViewController(animated: animated)
         }
+    }
+
+    public func logout() {
+        start()
     }
 
     private var topController: UIViewController? {

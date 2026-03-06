@@ -3,6 +3,8 @@ import SwiftUI
 import Combine
 
 public final class RoutableHostingController: UIHostingController<AnyView> {
+    static weak var routeHandler: RouteHandler?
+
     public let path: RoutePath
     private let viewModel: RoutableViewModel
     private var bag = Set<AnyCancellable>()
@@ -45,6 +47,22 @@ public final class RoutableHostingController: UIHostingController<AnyView> {
             navigationController?.setNavigationBarHidden(true, animated: false)
         }
 
+        if viewModel.enableNavItems {
+            navigationItem.leftBarButtonItem = UIBarButtonItem(
+                image: .init(systemName: "house.circle"),
+                style: .plain,
+                target: self,
+                action: #selector(routeToLeftIcon)
+            )
+
+            navigationItem.rightBarButtonItem = UIBarButtonItem(
+                image: .init(systemName: "person.circle"),
+                style: .plain,
+                target: self,
+                action: #selector(routeToRightIcon)
+            )
+        }
+
         if let nav = navigationController as? RoutableNavigationController {
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
@@ -55,6 +73,14 @@ public final class RoutableHostingController: UIHostingController<AnyView> {
 
     public override var preferredStatusBarStyle: UIStatusBarStyle {
         viewModel.preferredStatusBarStyle
+    }
+
+    @objc private func routeToLeftIcon() {
+        Self.routeHandler?.leftCornerIcon()
+    }
+
+    @objc private func routeToRightIcon() {
+        Self.routeHandler?.rightCornerIcon()
     }
 
     @MainActor @objc required dynamic init?(coder aDecoder: NSCoder) {

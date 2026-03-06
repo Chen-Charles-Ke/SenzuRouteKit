@@ -1,8 +1,26 @@
 import Foundation
 
+public protocol RouteHandler: AnyObject {
+    func leftCornerIcon()
+    func rightCornerIcon()
+}
+
+public protocol AuthHandler {
+    var isAuthenticated: Bool { get }
+    func performLogin(nextPath: RoutePath, isDeepLink: Bool)
+    func performLogout()
+}
+
 public protocol Router: AnyObject {
     var nav: RoutableNavigationController { get }
     var startPath: RoutePath { get }
+    var routeHandler: RouteHandler { get }
+
+    init(
+        navType: RoutableNavigationController.Type,
+        startPath: RoutePath,
+        routeHandler: RouteHandler
+    )
 
     func bind(route: Route)
     func bind(routes: [Route])
@@ -16,6 +34,7 @@ public protocol Router: AnyObject {
                animated: Bool)
 
     func dismiss(animated: Bool)
+    func logout()
 }
 
 public extension Router {
