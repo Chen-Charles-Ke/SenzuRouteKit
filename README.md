@@ -55,6 +55,29 @@ Then link product:
 .package(url: "https://github.com/Chen-Charles-Ke/SenzuRouteKit.git", exact: "1.0.0")
 ```
 
+### CocoaPods
+
+```ruby
+platform :ios, '13.0'
+
+target 'YourApp' do
+  use_frameworks!
+  pod 'SenzuRouteKit', :git => 'https://github.com/Chen-Charles-Ke/SenzuRouteKit.git', :tag => '1.0.0'
+end
+```
+
+Then run:
+
+```bash
+pod install
+```
+
+If you later publish to CocoaPods Trunk, you can switch to:
+
+```ruby
+pod 'SenzuRouteKit', '1.0.0'
+```
+
 ---
 
 ## Quick Start
