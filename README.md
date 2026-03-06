@@ -46,7 +46,7 @@ Most app projects end up duplicating the same navigation glue:
 Add package dependency:
 
 - URL: `https://github.com/Chen-Charles-Ke/SenzuRouteKit.git`
-- Version: `1.2.0`
+- Version: `1.1.0`
 
 Then link product:
 - `SenzuRouteKit`
@@ -54,7 +54,7 @@ Then link product:
 ### Swift Package Manager
 
 ```swift
-.package(url: "https://github.com/Chen-Charles-Ke/SenzuRouteKit.git", exact: "1.2.0")
+.package(url: "https://github.com/Chen-Charles-Ke/SenzuRouteKit.git", exact: "1.1.0")
 ```
 
 ### CocoaPods
@@ -64,7 +64,7 @@ platform :ios, '13.0'
 
 target 'YourApp' do
   use_frameworks!
-  pod 'SenzuRouteKit', :git => 'https://github.com/Chen-Charles-Ke/SenzuRouteKit.git', :tag => '1.2.0'
+  pod 'SenzuRouteKit', :git => 'https://github.com/Chen-Charles-Ke/SenzuRouteKit.git', :tag => '1.1.0'
 end
 ```
 
@@ -77,7 +77,7 @@ pod install
 If you later publish to CocoaPods Trunk, you can switch to:
 
 ```ruby
-pod 'SenzuRouteKit', '1.2.0'
+pod 'SenzuRouteKit', '1.1.0'
 ```
 
 ---
