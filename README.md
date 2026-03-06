@@ -19,8 +19,9 @@ A production-oriented navigation framework for **UIKit + SwiftUI** apps.
 5. [API Reference](#api-reference)
 6. [DI API](#di-api)
 7. [Navigation Behavior](#navigation-behavior)
-8. [Best Practices](#best-practices)
-9. [Roadmap](#roadmap)
+8. [Deep Link](#deep-link)
+9. [Best Practices](#best-practices)
+10. [Roadmap](#roadmap)
 
 ---
 
@@ -271,6 +272,60 @@ Supported scopes:
   - if `isRootView == true`, replace root controller
 - If `presentModally == true`:
   - present from top-most visible controller
+
+---
+
+## Deep Link
+
+`SenzuRouteKit` includes a standard deep link module:
+
+- `URLPattern`: URL matcher with scheme/host/path-template support
+- `StandardDeepLinkParser`: rule-based parser (`URL -> DeepLinkDestination`)
+- `DeepLinkCoordinator`: handles URL/UserActivity, supports pending queue before router is ready
+
+### Core types
+
+```swift
+public struct URLPattern
+public struct DeepLinkRule
+public protocol DeepLinkParser
+public struct StandardDeepLinkParser
+public struct DeepLinkDestination
+public final class DeepLinkCoordinator
+```
+
+### Path-template example
+
+```swift
+let pattern = URLPattern(
+    schemes: ["https"],
+    hosts: ["senzu.app"],
+    pathTemplate: "/open/:tab"
+)
+```
+
+### Parser example
+
+```swift
+let parser = StandardDeepLinkParser(rules: [
+    DeepLinkRule(pattern: URLPattern(schemes: ["https"], hosts: ["senzu.app"], pathTemplate: "/summary")) { match in
+        DeepLinkDestination(path: AppRoutes.summary, parameters: match.queryParameters)
+    }
+])
+```
+
+### Coordinator example
+
+```swift
+let coordinator = DeepLinkCoordinator(
+    parser: parser,
+    routerProvider: { SenzuDI.resolve(Router.self) }
+)
+
+_ = coordinator.handle(url: incomingURL)
+_ = coordinator.handle(userActivity: userActivity)
+coordinator.flushPending()
+```
 
 ---
 
