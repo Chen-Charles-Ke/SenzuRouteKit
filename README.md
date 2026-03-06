@@ -10,6 +10,22 @@
 - 支持 root route 覆盖
 - 支持自定义导航容器（含你自己的 tab bar 控制）
 
+## Resolver Adapter
+
+如果你项目使用 `Resolver`，可额外引入 `SenzuRouteKitResolver` target：
+
+```swift
+import Resolver
+import SenzuRouteKit
+import SenzuRouteKitResolver
+
+Resolver.registerSenzuRouter(
+    navType: MainNavigationController.self,
+    startPath: AppRoutes.home,
+    routeHandler: self
+)
+```
+
 ## 安装
 
 在 Xcode 的 **Package Dependencies** 里添加本地路径：
