@@ -22,6 +22,7 @@ public final class RoutableHostingController: UIHostingController<AnyView> {
         super.viewWillAppear(animated)
 
         navigationItem.title = viewModel.titleText
+        bag.removeAll()
 
         viewModel.titleTextPublisher?
             .sink { [weak self] title in
@@ -29,23 +30,7 @@ public final class RoutableHostingController: UIHostingController<AnyView> {
             }
             .store(in: &bag)
 
-        navigationController?.navigationBar.titleTextAttributes = viewModel.titleTextAttributes
-        navigationController?.navigationBar.tintColor = viewModel.navigationBarTintColor
-        navigationController?.navigationBar.setBackgroundImage(UIImage(), for: .default)
-        navigationController?.navigationBar.shadowImage = UIImage()
-
-        switch viewModel.navigationBarStyle {
-        case .solid:
-            navigationController?.setNavigationBarHidden(false, animated: false)
-            navigationController?.navigationBar.barTintColor = viewModel.navigationBarBackgroundColor
-            navigationController?.navigationBar.isTranslucent = false
-        case .transparent:
-            navigationController?.setNavigationBarHidden(false, animated: false)
-            navigationController?.navigationBar.barTintColor = .clear
-            navigationController?.navigationBar.isTranslucent = true
-        case .hidden:
-            navigationController?.setNavigationBarHidden(true, animated: false)
-        }
+        applyNavigationBarAppearance()
 
         if viewModel.enableNavItems {
             navigationItem.leftBarButtonItem = UIBarButtonItem(
@@ -81,6 +66,46 @@ public final class RoutableHostingController: UIHostingController<AnyView> {
 
     @objc private func routeToRightIcon() {
         Self.routeHandler?.rightCornerIcon()
+    }
+
+    private func applyNavigationBarAppearance() {
+        guard let navigationController else { return }
+
+        let appearance = UINavigationBarAppearance()
+        appearance.backgroundEffect = nil
+        appearance.shadowColor = .clear
+        appearance.shadowImage = UIImage()
+        appearance.titleTextAttributes = viewModel.titleTextAttributes
+
+        switch viewModel.navigationBarStyle {
+        case .solid:
+            appearance.configureWithOpaqueBackground()
+            appearance.backgroundColor = viewModel.navigationBarBackgroundColor
+            navigationController.navigationBar.isTranslucent = false
+            navigationController.setNavigationBarHidden(false, animated: false)
+        case .transparent:
+            appearance.configureWithTransparentBackground()
+            appearance.backgroundColor = .clear
+            navigationController.navigationBar.isTranslucent = true
+            navigationController.setNavigationBarHidden(false, animated: false)
+        case .hidden:
+            appearance.configureWithTransparentBackground()
+            appearance.backgroundColor = .clear
+            navigationController.navigationBar.isTranslucent = true
+            navigationController.setNavigationBarHidden(true, animated: false)
+        }
+
+        let navigationBar = navigationController.navigationBar
+        navigationBar.tintColor = viewModel.navigationBarTintColor
+        navigationBar.titleTextAttributes = viewModel.titleTextAttributes
+        navigationBar.standardAppearance = appearance
+        navigationBar.scrollEdgeAppearance = appearance
+        navigationBar.compactAppearance = appearance
+        if #available(iOS 15.0, *) {
+            navigationBar.compactScrollEdgeAppearance = appearance
+        }
+        navigationBar.layer.shadowOpacity = 0
+        navigationBar.layer.shadowColor = UIColor.clear.cgColor
     }
 
     @MainActor @objc required dynamic init?(coder aDecoder: NSCoder) {
